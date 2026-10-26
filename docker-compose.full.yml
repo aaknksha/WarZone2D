@@ -1,0 +1,73 @@
+# Option B phase 1: six running services; persistence integration is not complete yet.
+services:
+  frontend:
+    build: {context: ., dockerfile: proxy/frontend.Dockerfile}
+    restart: unless-stopped
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      - "${HTTP_PORT:-8080}:80"
+      # For domain-based automatic HTTPS, also publish 443:443 and use SITE_ADDRESS=your-domain
+    environment:
+      SITE_ADDRESS: "${SITE_ADDRESS:-http://localhost}"
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [frontend,game,api]
+    restart: unless-stopped
+  game:
+    build: {context: ., dockerfile: proxy/game.Dockerfile}
+    environment:
+      PORT: '3000'
+      FIRE_COOLDOWN_MS: "${FIRE_COOLDOWN_MS:-350}"
+      MATCH_DURATION_MS: "${MATCH_DURATION_MS:-180000}"
+      RESPAWN: "true"
+      RESPAWN_MIN_MS: "3000"
+      RESPAWN_MAX_MS: "5000"
+      SPAWN_PROTECTION_MS: "2000"
+      RESULT_API_URL: "http://api:4000/api/internal/match-result"
+      REDIS_URL: "redis://redis:6379"
+      CHECKPOINT_KEY: "warzone:game:local:v1"
+      INTERNAL_API_SECRET: "${INTERNAL_API_SECRET:?Set INTERNAL_API_SECRET in .env}"
+    depends_on:
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-warzone}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-warzone}
+      REDIS_URL: redis://redis:6379
+      INTERNAL_API_SECRET: "${INTERNAL_API_SECRET:?Set INTERNAL_API_SECRET in .env}"
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-warzone}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      POSTGRES_DB: "${POSTGRES_DB:-warzone}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: ["redis_data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
