@@ -1,6 +1,5 @@
 # WARZONE 2D — Option B, Phase 1 scaffold
 
-This is an **incremental upgrade**, not a finished full-PPT implementation.
 
 ## Run locally
 1. Install Docker Desktop (Linux containers mode).
