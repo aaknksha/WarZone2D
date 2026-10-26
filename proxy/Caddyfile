@@ -1,0 +1,15 @@
+:80 {
+    encode zstd gzip
+    handle /api/* {
+        reverse_proxy api:4000
+    }
+    handle /socket.io/* {
+        reverse_proxy game:3000
+    }
+    handle /health {
+        reverse_proxy game:3000
+    }
+    handle {
+        reverse_proxy frontend:80
+    }
+}

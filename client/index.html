@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WARZONE 2D</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230b0f0c'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%237cff6b' stroke-width='3'/%3E%3Cpath d='M16 2v8M16 22v8M2 16h8M22 16h8' stroke='%23ffb000' stroke-width='3'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="game"></div>
+
+    <div id="ui">
+
+      <section id="screen-auth" class="screen hidden">
+        <div class="panel auth-panel">
+          <h2>WARZONE 2D</h2><p class="tag">SOLDIER AUTHENTICATION</p>
+          <form id="form-login" class="auth-form">
+            <h3>LOGIN</h3>
+            <label class="field">EMAIL<input id="login-email" type="email" required autocomplete="email"></label>
+            <label class="field">PASSWORD<input id="login-password" type="password" required autocomplete="current-password"></label>
+            <button class="btn primary" type="submit">LOGIN</button>
+            <button id="btn-show-register" class="btn ghost" type="button">CREATE ACCOUNT</button>
+          </form>
+          <form id="form-register" class="auth-form hidden">
+            <h3>CREATE ACCOUNT</h3>
+            <label class="field">USERNAME<input id="register-username" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" required autocomplete="username"></label>
+            <label class="field">EMAIL<input id="register-email" type="email" required autocomplete="email"></label>
+            <label class="field">PASSWORD (MINIMUM 12 CHARACTERS)<input id="register-password" type="password" minlength="12" required autocomplete="new-password"></label>
+            <button class="btn primary" type="submit">REGISTER</button>
+            <button id="btn-show-login" class="btn ghost" type="button">BACK TO LOGIN</button>
+          </form>
+          <p id="auth-error" class="error" role="alert"></p>
+        </div>
+      </section>
+      <section id="screen-profile" class="screen hidden">
+        <div class="panel auth-panel">
+          <h2>SOLDIER PROFILE</h2>
+          <p id="profile-username" class="profile-name"></p><p id="profile-email" class="hint"></p>
+          <div class="profile-stats">
+            <div><span>MATCHES</span><strong id="stat-matches">0</strong></div>
+            <div><span>WINS</span><strong id="stat-wins">0</strong></div>
+            <div><span>LOSSES</span><strong id="stat-losses">0</strong></div>
+            <div><span>KILLS</span><strong id="stat-score">0</strong></div>
+            <div><span>DEATHS</span><strong id="stat-deaths">0</strong></div>
+          </div>
+          <p id="profile-error" class="error" role="alert"></p>
+          <button id="btn-profile-back" class="btn ghost">BACK TO MENU</button>
+        </div>
+      </section>
+      <div id="conn" class="conn connecting"><i></i><span>connecting…</span></div>
+      <button id="btn-mute" class="icon-btn" title="Toggle sound">SND ON</button>
+
+      <section id="screen-menu" class="screen">
+        <div class="panel menu">
+          <h1 class="logo" aria-label="WARZONE 2D">
+            <svg class="crosshair" viewBox="0 0 48 48" aria-hidden="true">
+              <circle cx="24" cy="24" r="13" fill="none" stroke="#7cff6b" stroke-width="4" />
+              <path d="M24 2v12M24 34v12M2 24h12M34 24h12" stroke="#ffb000" stroke-width="4" />
+              <rect x="22" y="22" width="4" height="4" fill="#ff4a3a" />
+            </svg>
+            <span class="w1">WARZONE</span><b class="w2">2D</b>
+          </h1>
+          <p class="tag">PRIVATE-ROOM PIXEL BATTLE ARENA · 2–4 PLAYERS</p>
+          <button id="btn-play" class="btn primary">PLAY</button>
+          <button id="btn-leaderboard" class="btn">🏆 LEADERBOARD</button>
+          <button id="btn-history" class="btn">📜 MATCH HISTORY</button>
+          <button id="btn-controls" class="btn">CONTROLS</button>
+          <button id="btn-profile" class="btn">MY PROFILE</button>
+          <button id="btn-logout" class="btn ghost">LOGOUT</button>
+        </div>
+      </section>
+
+      <section id="screen-leaderboard" class="screen hidden">
+        <div class="panel records-panel">
+          <div class="records-heading"><h2>🏆 LEADERBOARD</h2><button id="btn-leaderboard-refresh" class="btn small">REFRESH</button></div>
+          <p class="records-caption">PLAYERS YOU HAVE FACED · STATS FROM SHARED MATCHES</p>
+          <p id="leaderboard-status" class="records-status" role="status">Loading rankings…</p>
+          <div class="records-scroll"><table class="records-table"><thead><tr><th>RANK</th><th>CALLSIGN</th><th>WINS</th><th>MATCHES</th><th>KILLS</th><th>DEATHS</th></tr></thead><tbody id="leaderboard-body"></tbody></table></div>
+          <button id="btn-leaderboard-back" class="btn ghost">BACK TO MENU</button>
+        </div>
+      </section>
+
+      <section id="screen-history" class="screen hidden">
+        <div class="panel records-panel">
+          <div class="records-heading"><h2>📜 MATCH HISTORY</h2><button id="btn-history-refresh" class="btn small">REFRESH</button></div>
+          <p class="records-caption">YOUR LAST 20 COMPLETED MATCHES</p>
+          <p id="history-status" class="records-status" role="status">Loading matches…</p>
+          <div class="records-scroll"><table class="records-table"><thead><tr><th>DATE</th><th>ROOM</th><th>WINNER</th><th>RESULT</th><th>PLAYERS</th></tr></thead><tbody id="history-body"></tbody></table></div>
+          <button id="btn-history-back" class="btn ghost">BACK TO MENU</button>
+        </div>
+      </section>
+
+      <section id="screen-play" class="screen hidden">
+        <div class="panel">
+          <h2>PLAY</h2>
+          <label class="field">CALLSIGN<input id="in-name" maxlength="16" placeholder="Soldier" autocomplete="off" /></label>
+          <button id="btn-create" class="btn primary">CREATE PRIVATE MATCH</button>
+          <div class="or">— OR JOIN —</div>
+          <label class="field">ROOM CODE<input id="in-code" maxlength="5" placeholder="ABCDE" autocomplete="off" spellcheck="false" /></label>
+          <button id="btn-join" class="btn">JOIN MATCH</button>
+          <p id="play-error" class="error" role="alert"></p>
+          <button id="btn-play-back" class="btn ghost">BACK</button>
+        </div>
+      </section>
+
+      <section id="screen-lobby" class="screen hidden">
+        <div class="panel">
+          <h2>LOBBY</h2>
+          <div class="codebox">
+            <span class="lbl">ROOM CODE</span>
+            <span id="lobby-code" class="code">-----</span>
+            <button id="btn-copy" class="btn small">COPY</button>
+          </div>
+          <div id="lobby-count" class="count"></div>
+          <ul id="lobby-players" class="plist"></ul>
+          <p id="lobby-hint" class="hint"></p>
+          <button id="btn-start" class="btn primary" disabled>START MATCH</button>
+          <p id="lobby-error" class="error" role="alert"></p>
+          <button id="btn-lobby-leave" class="btn ghost">LEAVE</button>
+        </div>
+      </section>
+
+      <section id="screen-controls" class="screen hidden">
+        <div class="panel">
+          <h2>CONTROLS</h2>
+          <table class="keys">
+            <tr><td><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows</td><td>Move</td></tr>
+            <tr><td>Mouse</td><td>Aim</td></tr>
+            <tr><td>Left click / <kbd>Space</kbd></td><td>Fire (hold to keep firing)</td></tr>
+          </table>
+          <ul class="rules">
+            <li>Everyone starts with 100 HP. Each hit deals 20.</li>
+            <li>Each elimination is 1 kill. Eliminated players respawn after 3–5 seconds with brief spawn protection.</li>
+            <li>The match lasts 3 minutes after a 3-2-1 countdown.</li>
+            <li>When time is up, most kills wins. Equal top kills is a draw.</li>
+          </ul>
+          <button id="btn-controls-close" class="btn primary">GOT IT</button>
+        </div>
+      </section>
+
+      <div id="hud" class="hidden">
+        <div class="hud-top">
+          <div id="hud-timer" class="timer">3:00</div>
+          <div id="hud-board" class="board"></div>
+        </div>
+        <div id="hud-feed" class="feed"></div>
+        <div class="hud-me">
+          <div class="hp-label"><span id="hud-hp-text">100</span> HP &nbsp;·&nbsp; <span id="hud-kills">0</span> KILLS <em id="hud-streak"></em></div>
+          <div class="hp"><div id="hud-hp" class="hp-fill"></div></div>
+        </div>
+        <div id="hud-dead" class="dead hidden">
+          <div class="d-title">ELIMINATED</div>
+          <div id="d-by" class="d-by"></div>
+          <div id="d-timer" class="d-timer">RESPAWN IN 3.0s</div>
+          <div id="d-bar" class="d-bar"><div id="d-fill"></div></div>
+        </div>
+        <div id="banner" class="banner hidden"></div>
+      </div>
+
+      <section id="screen-results" class="screen hidden">
+        <div class="panel wide">
+          <h2 id="res-title" class="res-title">RESULT</h2>
+          <div id="res-winner" class="res-winner"></div>
+          <p id="res-sub" class="tag"></p>
+          <table class="results">
+            <thead><tr><th>#</th><th>PLAYER</th><th class="num">KILLS</th><th class="num">DEATHS</th><th class="num">K/D</th><th class="num">ACC</th><th class="num">BEST STREAK</th></tr></thead>
+            <tbody id="res-body"></tbody>
+          </table>
+          <button id="btn-res-menu" class="btn primary">BACK TO MENU</button>
+        </div>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

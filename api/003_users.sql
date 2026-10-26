@@ -1,0 +1,19 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE TABLE IF NOT EXISTS users (
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+ username VARCHAR(30) NOT NULL UNIQUE,
+ email VARCHAR(255) NOT NULL,
+ password_hash TEXT NOT NULL,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_lower ON users (LOWER(email));
+CREATE TABLE IF NOT EXISTS player_stats (
+ user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+ matches_played INTEGER NOT NULL DEFAULT 0,
+ wins INTEGER NOT NULL DEFAULT 0,
+ losses INTEGER NOT NULL DEFAULT 0,
+ total_score BIGINT NOT NULL DEFAULT 0,
+ total_deaths BIGINT NOT NULL DEFAULT 0
+);
+ALTER TABLE phase2_match_scores ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id);
+CREATE INDEX IF NOT EXISTS idx_phase2_scores_user_id ON phase2_match_scores(user_id);
